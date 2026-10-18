@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>かんじ てがき じしょ</title>
+<meta name="description" content="手書きで漢字を書くと、読み・意味・書き順・反対語・四字熟語・ことわざがわかる、小学生向けの漢字じしょ。">
+<meta name="theme-color" content="#faf5e6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="かんじじしょ">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loading" class="loading">よみこみちゅう…</div>
+
+<main class="app" id="app" hidden>
+  <!-- 左：手書き -->
+  <section class="left">
+    <header class="titlebar">
+      <button class="menu-btn" id="menuBtn" aria-label="メニュー" aria-haspopup="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+      <h1>かんじ てがき じしょ</h1>
+      <div class="menu" id="menu" hidden>
+        <button data-open="search">🔍 かんじを さがす</button>
+        <button data-open="history">🕘 りれき・おきにいり</button>
+        <button data-open="test">📝 かきとり テスト</button>
+        <button data-open="about">ℹ️ このアプリについて</button>
+      </div>
+    </header>
+
+    <div class="pad-wrap">
+      <div class="pad" id="mainPad">
+        <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/>
+        </svg>
+        <canvas id="mainCanvas" aria-label="てがき マス"></canvas>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="big orange" id="clearBtn">🧽 けす</button>
+      <button class="big green" id="undoBtn" disabled>↩︎ 1かく もどす</button>
+      <button class="big blue" id="searchBtn" disabled>🔍 しらべる</button>
+    </div>
+    <p class="message" id="message">マスの なかに かんじを 1もじ かいてね</p>
+  </section>
+
+  <!-- 右：結果 -->
+  <section class="right">
+    <div id="candidatesBox" hidden>
+      <h2 class="small-title">これかな？</h2>
+      <div class="candidates" id="candidates"></div>
+    </div>
+    <div id="card"></div>
+  </section>
+</main>
+
+<!-- ダイアログ -->
+<dialog id="dlgSearch" class="sheet">
+  <div class="sheet-head"><h2>かんじを さがす</h2><button class="close" data-close>とじる</button></div>
+  <input id="readingInput" class="search-input" type="search" placeholder="よみで さがす（れい：やま、さん）" autocomplete="off">
+  <div class="tabs" id="gradeTabs"></div>
+  <p class="sub" id="searchInfo"></p>
+  <div class="kgrid" id="searchGrid"></div>
+</dialog>
+
+<dialog id="dlgHistory" class="sheet">
+  <div class="sheet-head"><h2>りれき・おきにいり</h2><button class="close" data-close>とじる</button></div>
+  <div class="tabs" id="historyTabs">
+    <button class="tab active" data-tab="history">りれき</button>
+    <button class="tab" data-tab="favorites">おきにいり ★</button>
+  </div>
+  <div class="kgrid" id="historyGrid"></div>
+  <button class="link-danger" id="clearHistory">りれきを けす</button>
+</dialog>
+
+<dialog id="dlgOrder" class="sheet wide">
+  <div class="sheet-head"><h2 id="orderTitle"></h2><button class="close" data-close>とじる</button></div>
+  <p class="sub" id="orderCount"></p>
+  <div class="order-box"><svg id="orderSvg" viewBox="0 0 1 1"></svg></div>
+  <div class="btn-row">
+    <button class="big orange" id="orderReplay">⟲ もういちど</button>
+    <button class="big blue" id="orderStep">⏭ 1かくずつ</button>
+    <label class="slow"><input type="checkbox" id="orderSlow"> ゆっくり</label>
+  </div>
+</dialog>
+
+<dialog id="dlgPractice" class="sheet wide">
+  <div class="sheet-head">
+    <h2 id="practiceTitle"></h2>
+    <div class="tabs inline" id="practiceTabs">
+      <button class="tab active" data-mode="trace">なぞる</button>
+      <button class="tab" data-mode="test">見ないで</button>
+    </div>
+    <button class="close" data-close>とじる</button>
+  </div>
+  <p class="prompt" id="practicePrompt" hidden></p>
+  <p class="feedback" id="practiceFeedback">&nbsp;</p>
+  <div class="pad practice-pad" id="practicePad">
+    <svg class="grid" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/>
+    </svg>
+    <svg class="guide" id="practiceGuide" viewBox="0 0 1 1"></svg>
+    <canvas id="practiceCanvas"></canvas>
+    <div class="done-overlay" id="practiceDone" hidden></div>
+  </div>
+  <p class="sub center" id="practiceCount"></p>
+  <div class="btn-row">
+    <button class="big orange" id="practiceRestart">⟲ さいしょから</button>
+    <button class="big yellow" id="practiceHint">💡 ヒント</button>
+    <button class="big blue" id="practiceNext" hidden>つぎへ →</button>
+  </div>
+</dialog>
+
+<dialog id="dlgTest" class="sheet">
+  <div class="sheet-head"><h2>かきとり テスト</h2><button class="close" data-close>とじる</button></div>
+  <div id="testBody"></div>
+</dialog>
+
+<dialog id="dlgIdiom" class="sheet small">
+  <div class="sheet-head"><h2 id="idiomText"></h2><button class="close" data-close>とじる</button></div>
+  <p class="sub" id="idiomReading"></p>
+  <p class="idiom-meaning" id="idiomMeaning"></p>
+  <button class="pill blue" id="idiomSpeak">🔊 よみあげ</button>
+</dialog>
+
+<dialog id="dlgAbout" class="sheet">
+  <div class="sheet-head"><h2>このアプリについて</h2><button class="close" data-close>とじる</button></div>
+  <div class="about">
+    <p>てがきで かんじを かくと、よみ・いみ・かきじゅん などが わかる 小学生むけの かんじじしょ です。小学校で ならう 1,026字（2020年度からの 学年別漢字配当表）に たいおう しています。</p>
+    <p>かいた じや りれきは この きかいの 中だけに ほぞんされ、どこにも おくられません。</p>
+    <h3>データの しゅってん</h3>
+    <ul>
+      <li>かきじゅん データ：<a href="https://kanjivg.tagaini.net/" target="_blank" rel="noopener">KanjiVG</a>（© Ulrich Apel, CC BY-SA 3.0）をもとに作成</li>
+      <li>よみの しょうごう：KANJIDIC2（© EDRDG, CC BY-SA 4.0）</li>
+      <li>いみ・れいぶん・四字じゅくご・ことわざ の せつめいは したがきです。まちがいを みつけたら おしえてください。</li>
+    </ul>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>
