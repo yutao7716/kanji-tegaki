@@ -1,5 +1,5 @@
 // オフラインでも使えるように、ファイルを キャッシュする
-const VERSION = 'kanji-v1';
+const VERSION = 'kanji-v2';
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'data/kanji.json', 'data/strokes.json', 'data/extras.json',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];

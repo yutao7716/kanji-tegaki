@@ -46,7 +46,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 .right { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; padding-bottom: 8px; }
 
 @media (max-width: 860px), (max-aspect-ratio: 1/1) {
-  .app { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+  .app { grid-template-columns: minmax(0, 1fr); height: auto; min-height: 100vh; }
   .right { overflow: visible; }
 }
 
@@ -211,3 +211,14 @@ dialog.sheet::backdrop { background: rgba(0,0,0,0.35); }
 .test-results { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 16px 0; }
 .test-results div { background: #fff; border-radius: 14px; padding: 10px 14px; text-align: center; font-size: 1.6rem; }
 .test-results .k { font-family: var(--kanji-font); font-size: 3rem; font-weight: 600; }
+
+/* かんたん／ふつう 切り替え */
+.meaning-head { display: flex; align-items: flex-start; gap: 10px; }
+.meaning-head .meaning { flex: 1; min-width: 0; }
+.tabs.mini { flex: none; padding: 2px; gap: 2px; }
+.tabs.mini .tab { padding: 5px 10px; font-size: 0.9rem; }
+@media (max-width: 600px) {
+  .meaning-head { flex-direction: column-reverse; align-items: stretch; }
+  .tabs.mini { align-self: flex-end; }
+  #gradeTabs .tab, #testGrades .tab { padding: 9px 4px; font-size: 0.95rem; }
+}

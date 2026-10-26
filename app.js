@@ -24,6 +24,18 @@ const Store = {
   },
 };
 
+/* ---------------- 設定（かんたん／ふつう） ---------------- */
+const Settings = {
+  get standard() { try { return localStorage.getItem('standardExplanation') === '1'; } catch { return false; } },
+  set standard(v) { try { localStorage.setItem('standardExplanation', v ? '1' : '0'); } catch { /* 保存できない環境 */ } },
+};
+const meaningOf = (x) => (Settings.standard ? (x.meaningStd || x.meaning) : x.meaning);
+
+/* ---------------- 学年 ---------------- */
+const GRADES = [1, 2, 3, 4, 5, 6, 7];
+const gradeLabel = (g) => (g >= 7 ? '中学・高校' : `${g}ねんせい`);
+const gradeShort = (g) => (g >= 7 ? '中・高' : `${g}年`);
+
 /* ---------------- 認識 ---------------- */
 const N = 16;
 const dist2 = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
@@ -226,7 +238,7 @@ function speechText(e) {
   const parts = [];
   if (e.onyomi.length) parts.push('おんよみは、' + e.onyomi.join('、'));
   if (e.kunyomi.length) parts.push('くんよみは、' + e.kunyomi.map((k) => k.replace(/[()]/g, '')).join('、'));
-  parts.push('いみは、' + e.meaning);
+  parts.push('いみは、' + meaningOf(e));
   return parts.join('。');
 }
 
@@ -299,9 +311,15 @@ function renderCard() {
     <div class="card-head">
       <div class="kanji-box">${esc(k)}</div>
       <div class="head-right">
-        <div class="meaning"><span class="label bg-orange">いみ</span><span>${esc(e.meaning)}</span></div>
+        <div class="meaning-head">
+          <div class="meaning"><span class="label bg-orange">いみ</span><span>${esc(meaningOf(e))}</span></div>
+          <div class="tabs mini" role="group" aria-label="せつめいの むずかしさ">
+            <button class="tab${Settings.standard ? '' : ' active'}" data-level="easy">かんたん</button>
+            <button class="tab${Settings.standard ? ' active' : ''}" data-level="std">ふつう</button>
+          </div>
+        </div>
         <div class="badges">
-          <span class="badge" style="background:rgba(246,196,69,.55)">${e.grade}ねんせい</span>
+          <span class="badge" style="background:rgba(246,196,69,.55)">${gradeLabel(e.grade)}</span>
           ${info ? `<span class="badge" style="background:rgba(47,124,246,.12)">${info.strokes}かく</span>
           <span class="badge" style="background:rgba(52,168,83,.14)">ぶしゅ ${esc(info.radical)}${info.radicalName ? `（${esc(info.radicalName)}）` : ''}</span>` : ''}
         </div>
@@ -329,6 +347,7 @@ function onCardClick(ev) {
   if (!btn) return;
   const k = S.selected;
   if (btn.dataset.k) { select(btn.dataset.k); return; }
+  if (btn.dataset.level) { Settings.standard = btn.dataset.level === 'std'; renderCard(); return; }
   if (btn.dataset.idiom) { openIdiom(btn.dataset.idiom); return; }
   switch (btn.dataset.act) {
     case 'speak': speak(speechText(S.dict[k])); break;
@@ -353,7 +372,7 @@ function openIdiom(text) {
   currentIdiom = i;
   $('#idiomText').textContent = i.text;
   $('#idiomReading').textContent = i.reading;
-  $('#idiomMeaning').textContent = i.meaning;
+  $('#idiomMeaning').textContent = meaningOf(i);
   openDialog('#dlgIdiom');
 }
 
@@ -369,10 +388,10 @@ function renderSearch() {
     $('#gradeTabs').hidden = true;
   } else {
     list = S.ordered.filter((e) => e.grade === searchGrade);
-    $('#searchInfo').textContent = `${searchGrade}ねんせいで ならう かんじ（${list.length}じ）`;
+    $('#searchInfo').textContent = `${gradeLabel(searchGrade)}で ならう かんじ（${list.length}じ）`;
     $('#gradeTabs').hidden = false;
   }
-  $('#gradeTabs').innerHTML = [1, 2, 3, 4, 5, 6].map((g) => `<button class="tab${g === searchGrade ? ' active' : ''}" data-g="${g}">${g}ねんせい</button>`).join('');
+  $('#gradeTabs').innerHTML = GRADES.map((g) => `<button class="tab${g === searchGrade ? ' active' : ''}" data-g="${g}">${gradeShort(g)}</button>`).join('');
   fillGrid('#searchGrid', list.map((e) => e.kanji), 'みつからなかったよ');
 }
 function fillGrid(sel, list, emptyText) {
@@ -549,8 +568,8 @@ function finishPractice() {
 const T = { grade: 1, questions: [], index: 0, results: [] };
 function renderTestSetup() {
   $('#testBody').innerHTML = `
-    <p class="sub">なんねんせいの かんじに する？</p>
-    <div class="tabs" id="testGrades">${[1, 2, 3, 4, 5, 6].map((g) => `<button class="tab${g === T.grade ? ' active' : ''}" data-g="${g}">${g}ねんせい</button>`).join('')}</div>
+    <p class="sub">どの がくねんの かんじに する？</p>
+    <div class="tabs" id="testGrades">${GRADES.map((g) => `<button class="tab${g === T.grade ? ' active' : ''}" data-g="${g}">${gradeShort(g)}</button>`).join('')}</div>
     <div class="btn-row" style="margin-top:24px"><button class="big blue" id="testStart">5もん スタート！</button></div>`;
 }
 function testPrompt(e) {
@@ -653,7 +672,7 @@ async function main() {
     if (b.id === 'testSetup') renderTestSetup();
   };
 
-  $('#idiomSpeak').onclick = () => currentIdiom && speak(currentIdiom.reading + '。' + currentIdiom.meaning);
+  $('#idiomSpeak').onclick = () => currentIdiom && speak(currentIdiom.reading + '。' + meaningOf(currentIdiom));
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') {
     navigator.serviceWorker.register('sw.js').catch(() => {});
