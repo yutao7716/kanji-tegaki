@@ -4,10 +4,15 @@ import Foundation
 struct Idiom: Codable, Identifiable, Hashable {
     let text: String     // 例：一石二鳥
     let reading: String  // 例：いっせきにちょう
-    let meaning: String  // 子ども向けの意味
+    let meaning: String  // 子ども向けの意味（かんたん）
+    let meaningStd: String? // ふつうの説明
     let kind: String     // "yoji"（四字熟語） または "kotowaza"（ことわざ）
 
     var id: String { text }
+
+    func meaningText(standard: Bool) -> String {
+        standard ? (meaningStd ?? meaning) : meaning
+    }
     var isYoji: Bool { kind == "yoji" }
 }
 

@@ -70,12 +70,12 @@ struct SearchView: View {
 
             if query.trimmingCharacters(in: .whitespaces).isEmpty {
                 Picker("がくねん", selection: $grade) {
-                    ForEach(1...6, id: \.self) { g in
-                        Text("\(g)ねんせい").tag(g)
+                    ForEach(KanjiEntry.allGrades, id: \.self) { g in
+                        Text(KanjiEntry.gradeShortLabel(g)).tag(g)
                     }
                 }
                 .pickerStyle(.segmented)
-                Text("\(grade)ねんせいで ならう かんじ（\(results.count)じ）")
+                Text("\(KanjiEntry.gradeLabel(grade))で ならう かんじ（\(results.count)じ）")
                     .font(.title3)
                     .foregroundStyle(.secondary)
             } else {

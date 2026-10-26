@@ -6,14 +6,37 @@ struct KanjiEntry: Codable, Identifiable, Hashable {
     let grade: Int          // ならう学年
     let onyomi: [String]    // 音読み（カタカナ）
     let kunyomi: [String]   // 訓読み（ひらがな。送りがなは ( ) で囲む）
-    let meaning: String     // 子ども向けの意味
+    let meaning: String     // 子ども向けの意味（かんたん）
+    let meaningStd: String? // ふつうの説明（中学年以上むけ）
     let examples: [String]  // つかいかた（ことばの例）
     let synonyms: [String]  // にた意味のことば
 
     var id: String { kanji }
 
+    /// 学年の表示名（7 = 中学・高校）
+    var gradeLabel: String { KanjiEntry.gradeLabel(grade) }
+
+    static func gradeLabel(_ g: Int) -> String {
+        g >= 7 ? "中学・高校" : "\(g)ねんせい"
+    }
+
+    /// せまい所（セグメント）用の短い表示名
+    static func gradeShortLabel(_ g: Int) -> String {
+        g >= 7 ? "中・高" : "\(g)年"
+    }
+
+    /// えらべる学年（1〜6年 と 中学・高校）
+    static let allGrades = Array(1...7)
+
+    /// 表示する意味（ふつう説明が なければ かんたん説明）
+    func meaningText(standard: Bool) -> String {
+        standard ? (meaningStd ?? meaning) : meaning
+    }
+
     /// 読み上げ用の文章
-    var speechText: String {
+    var speechText: String { speechText(standard: false) }
+
+    func speechText(standard: Bool) -> String {
         let clean: (String) -> String = {
             $0.replacingOccurrences(of: "(", with: "")
               .replacingOccurrences(of: ")", with: "")
@@ -25,7 +48,7 @@ struct KanjiEntry: Codable, Identifiable, Hashable {
         if !kunyomi.isEmpty {
             parts.append("くんよみは、" + kunyomi.map(clean).joined(separator: "、"))
         }
-        parts.append("いみは、" + meaning)
+        parts.append("いみは、" + meaningText(standard: standard))
         return parts.joined(separator: "。")
     }
 }

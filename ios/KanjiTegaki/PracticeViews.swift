@@ -344,10 +344,12 @@ struct TestSessionView: View {
                 Button("とじる") { dismiss() }
                     .font(.title3.bold())
             }
-            Text("なんねんせいの かんじに する？")
+            Text("どの がくねんの かんじに する？")
                 .font(.title2)
             Picker("がくねん", selection: $grade) {
-                ForEach(1...6, id: \.self) { g in Text("\(g)ねんせい").tag(g) }
+                ForEach(KanjiEntry.allGrades, id: \.self) { g in
+                    Text(KanjiEntry.gradeShortLabel(g)).tag(g)
+                }
             }
             .pickerStyle(.segmented)
             Button { start() } label: {

@@ -54,6 +54,7 @@ private struct CardContent: View {
     let onStrokeOrder: () -> Void
     let onPractice: () -> Void
     @ObservedObject private var store = UserStore.shared
+    @AppStorage("standardExplanation") private var standard = false
 
     private var info: KanjiInfo? { ExtrasStore.shared.info(of: kanji) }
 
@@ -125,16 +126,23 @@ private struct CardContent: View {
 
             if let entry {
                 VStack(alignment: .leading, spacing: style.spacing) {
+                    // 説明の切りかえ（かんたん／ふつう）
+                    Picker("せつめい", selection: $standard) {
+                        Text("かんたん").tag(false)
+                        Text("ふつう").tag(true)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 220)
                     // いみ
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         label("いみ", color: .orange)
-                        Text(entry.meaning)
+                        Text(entry.meaningText(standard: standard))
                             .font(.system(size: style.body + 2, weight: .medium))
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     // 学年・画数・部首（入りきらなければ 折り返す）
                     FlowLayout(spacing: 8, lineSpacing: 8) {
-                        badge("\(entry.grade)ねんせい", color: Color.yellow.opacity(0.55))
+                        badge(entry.gradeLabel, color: Color.yellow.opacity(0.55))
                         if let info {
                             badge("\(info.strokes)かく", color: Color.blue.opacity(0.12))
                             badge("ぶしゅ \(info.radical)" + (info.radicalName.isEmpty ? "" : "（\(info.radicalName)）"),
@@ -152,7 +160,7 @@ private struct CardContent: View {
         if let entry {
             HStack(spacing: 10) {
                 actionButton("よみあげ", icon: "speaker.wave.2.fill", color: .blue) {
-                    Speaker.shared.speak(entry.speechText)
+                    Speaker.shared.speak(entry.speechText(standard: standard))
                 }
                 actionButton("かきじゅん", icon: "play.circle.fill", color: .orange) {
                     onStrokeOrder()
@@ -257,6 +265,7 @@ private struct IdiomChip: View {
     let idiom: Idiom
     let fontSize: CGFloat
     @State private var showing = false
+    @AppStorage("standardExplanation") private var standard = false
 
     var body: some View {
         Button { showing = true } label: {
@@ -281,11 +290,11 @@ private struct IdiomChip: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
                 Divider()
-                Text(idiom.meaning)
+                Text(idiom.meaningText(standard: standard))
                     .font(.title3)
                     .fixedSize(horizontal: false, vertical: true)
                 Button {
-                    Speaker.shared.speak(idiom.reading + "。" + idiom.meaning)
+                    Speaker.shared.speak(idiom.reading + "。" + idiom.meaningText(standard: standard))
                 } label: {
                     Label("よみあげ", systemImage: "speaker.wave.2.fill")
                         .font(.headline)
